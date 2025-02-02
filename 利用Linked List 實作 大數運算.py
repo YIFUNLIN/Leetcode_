@@ -1,88 +1,69 @@
 # 113 交大資財所: 利用Linked List 實作 大數運算
 class Node:
-    def __init__(self,val):
-        self.val = val
-        self.next = None
-        
+    """定義單向鏈結串列的節點"""
+    def __init__(self, digit):
+        self.digit = digit  # 存單個數字
+        self.next = None    # 指向下一個節點
+
+class BigNumber:
+    """用鏈結串列來表示大數字"""
+    def __init__(self):
+        self.head = None  # 初始化為空鏈結串列 (self.head 指向整個鏈結串列的第一個節點（也就是最低位數）)
+
 def BN_new():
-    return None
+    """對應 BN_new()，建立一個新的鏈結串列"""
+    return BigNumber()
 
-def BN_insert(head, digit):  # 要知道目前head指向誰，跟插入的數值
-    new_node = Node(digit) # 先替新數字建一個新node
+def BN_insert(big_number, value):
+    """將數字插入到鏈結串列的頭部（因為最低位在前）"""
+    new_node = Node(value)   # 創建新節點
+    new_node.next = big_number.head  # 新節點的 next 指向舊的 head
+    big_number.head = new_node      # 更新 head，讓它指向新節點
     
-    # 再由head來判斷該Linked List 有無其他Node
-    if head == None:  # 若head為空，代表是空串列
-        return new_node   # 直接回傳該 Node
-    
-    # 若有
-    current = head  # 用current 先指向該Linked List 的head 
-    while current.next != None: # 當他還不是最後一個 node，就一直走到最後一個node
-        current = current.next
-    current.next = new_node # 將新Node 接在最後一個Node 後面
-    return head  # 回傳整個Linked List
+def BN_add(A, B, C):
+    """兩個 BigNumber 相加，把結果存入 C"""
+    carry = 0  # 進位變數
+    p1, p2 = A.head, B.head  # 指向 A 和 B 的起始節點（最低位）
 
-def reverse(head):  # 為了要實現Linked List 的相加，所以先將整個Linked List 反轉
-        prev = None    
-        while head:
-            next_node = head.next  # 先用另一個指標 next_node，指向 head 的下一個node
-            head.next = prev       # 改變 head 的 next 去指向 prev 所在 (為了完成反轉)
-            prev = head            # prev 往前來到 head 位置
-            head = next_node       # head 往前來到 next_node 位置
-        return prev                # 最後回傳反轉完的 Linked List
+    while p1 or p2 or carry:
+        sum_val = carry  # 先加上進位值
+        if p1:  # 如果 A 還有數字
+            sum_val += p1.digit
+            p1 = p1.next  # 移動到下一個數字
+        if p2:  # 如果 B 還有數字
+            sum_val += p2.digit
+            p2 = p2.next  # 移動到下一個數字
 
+        carry = sum_val // 10  # 計算進位
+        BN_insert(C, sum_val % 10)  # 只存個位數
 
-def BN_add(A,B,C):   
-    A, B = reverse(A), reverse(B)  # 反轉兩個Linked List
-        
-    # 計算過程
-    carry = 0  # 若有需要進位，則放在這
-    
-    # 建立存放答案 C 的 Linked List
-    result_tail = None  # 動態追蹤尾部並新增節點
+def BN_print(big_number):
+    """印出整個數字（從鏈結串列轉成字串）"""
+    if not big_number.head:  # 如果鏈結串列是空的，則輸出 0
+        print("0")
+        return
+    current = big_number.head  # 從頭開始遍歷
+    result = []
+    while current:
+        result.append(str(current.digit))  # 把數字轉成字串存入陣列
+        current = current.next  # 移動到下一個節點
+    print("".join(result))  # 連接所有數字並輸出
 
-    # 遍歷Linked List
-    while A or B or carry:
-        val1 = A.val if A else 0
-        val2 = B.val if B else 0
-    
-        # 計算當前總和
-        total = val1 + val2 + carry
-        carry = total // 10  # 計算看是否進位，取得當前的進位
-        digit = total % 10   # 餘數: 要先將餘數插入到 Node 中
-        
-        # 建立新的 Node 來存放這次運算完的結果
-        new_node = Node(digit)
-        
-        if C == None:  # 若為空串列
-            C = new_node  # 將head指向該Node
-            result_tail = new_node   # tail 跑去該node位置
-        else:
-            result_tail.next = new_node   
-            result_tail = new_node
-            
-        # 往下走
-        A = A.next if A else None
-        B = B.next if B else None
-    return reverse(C)  # 將Linked List 結果反轉回去才是正確的順序
-    
-    
-def BN_print(head):    # 之後會將C傳入，要印出來用
-    ans = []           # 建立空列表
-    while head != None:
-        ans.append(str(head.val))  # 將每個值轉成字串後存入
-        head = head.next    
-    return ''.join(ans)
-
-# ============== 以下為測試 =================
+# ------------------------測試程式--------------------
 A = BN_new()
 B = BN_new()
 C = BN_new()
 
-for i in range(9,0,-1):
-    A = BN_insert(A,i)
-for i in range(0,8,1):
-    B = BN_insert(B,8)
-C = BN_add(A,B,C)
-print(BN_print(C))
-    
-    BN_print(C)
+# A 存入 987654321
+for i in range(9, 0, -1):  # 9, 8, ..., 1
+    BN_insert(A, i)
+
+# B 存入 88888888
+for _ in range(8):  # 8 個 8
+    BN_insert(B, 8)
+
+# 執行 A + B
+BN_add(A, B, C)
+
+# 印出計算結果
+BN_print(C)
